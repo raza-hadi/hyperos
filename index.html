@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 11 Simulation</title>
+    <link rel="stylesheet" href="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: url('https://wallpaperaccess.com/full/317501.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        #taskbar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            padding: 0 10px;
+            display: none; /* Hide taskbar initially */
+        }
+        #start-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        #start-menu {
+            position: absolute;
+            bottom: 40px;
+            left: 10px;
+            width: 300px;
+            height: 500px;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        #start-menu .close {
+            align-self: flex-end;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        #start-menu .app {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            cursor: pointer;
+        }
+        #start-menu .app:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        #desktop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .window {
+            position: absolute;
+            width: 800px;
+            height: 600px;
+            background-color: white;
+            border: 1px solid #ccc;
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            cursor: move;
+        }
+        .window .title-bar {
+            background-color: #0078d7;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            cursor: move;
+        }
+        .window .title-bar .controls {
+            display: flex;
+        }
+        .window .title-bar .controls span {
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .window .content {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .sign-in-window {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .sign-in-window h2 {
+            margin: 0 0 20px;
+        }
+        .sign-in-window input {
+            margin: 10px;
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .sign-in-window button {
+            padding: 10px;
+            background-color: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+        }
+        .sign-in-window button:hover {
+            background-color: #0056a0;
+        }
+        /* Video Overlay */
+        #video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #video-overlay video {
+            width: 80%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Video Overlay -->
+    <div id="video-overlay">
+        <video id="intro-video" autoplay muted>
+            <source src="HyperOS.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <!-- Sign In Window -->
+    <div id="sign-in" class="window">
+        <div class="title-bar">
+            <span>Sign In</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('sign-in')">❌</span>
+            </div>
+        </div>
+        <div class="content sign-in-window">
+            <h2>Login</h2>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="signIn()">Sign In</button>
+            <p id="sign-in-message"></p>
+        </div>
+    </div>
+
+    <!-- Windows and Start Menu -->
+    <div id="taskbar">
+        <button id="start-button">&#x1F30D; Start</button>
+        <span id="time">12:00</span>
+    </div>
+    <div id="start-menu">
+        <div class="close" onclick="closeStartMenu()">❌</div>
+        <div class="app" onclick="openWindow('snake')">🐍 Snake Game</div>
+        <div class="app" onclick="openWindow('calculator')">🧮 Calculator</div>
+        <div class="app" onclick="openWindow('browser')">🌐 Browser</div>
+        <div class="app" onclick="openWindow('hyper-ai')">🤖 Hyper AI</div>
+        <div class="app" onclick="openWindow('google-maps')">🗺️ Google Maps</div>
+        <div class="app" onclick="openWindow('youtube')">📹 YouTube</div>
+        <div class="app" onclick="openWindow('google-earth')">🌍 Google Earth</div>
+        <div class="app" onclick="openWindow('instagram')">📸 Instagram</div>
+        <div class="app" onclick="openWindow('facebook')">📘 Facebook</div>
+        <div class="app" onclick="openWindow('google-keep')">📝 Google Keep</div>
+        <div class="app" onclick="openWindow('google-sheets')">📊 Google Sheets</div>
+    </div>
+    <div id="desktop"></div>
+
+    <!-- Application Windows -->
+    <div id="snake" class="window" style="top: 20%; left: 20%;">
+        <div class="title-bar">
+            <span>Snake Game</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('snake')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('snake')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://www.google.com/search?q=snake+game" id="snake-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="calculator" class="window" style="top: 20%; left: 30%;">
+        <div class="title-bar">
+            <span>Calculator</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('calculator')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('calculator')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://www.google.com/search?q=google+calculator" id="calculator-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="browser" class="window" style="top: 20%; left: 40%;">
+        <div class="title-bar">
+            <span>Browser</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('browser')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('browser')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://www.google.com" id="browser-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="hyper-ai" class="window" style="top: 20%; left: 50%;">
+        <div class="title-bar">
+            <span>Hyper AI</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('hyper-ai')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('hyper-ai')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://raza-hadi.github.io/hyper-ai" id="hyper-ai-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="google-maps" class="window" style="top: 20%; left: 60%;">
+        <div class="title-bar">
+            <span>Google Maps</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('google-maps')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('google-maps')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://www.google.com/maps" id="google-maps-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="youtube" class="window" style="top: 20%; left: 70%;">
+        <div class="title-bar">
+            <span>YouTube</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('youtube')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('youtube')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://www.youtube.com" id="youtube-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="google-earth" class="window" style="top: 20%; left: 80%;">
+        <div class="title-bar">
+            <span>Google Earth</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('google-earth')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('google-earth')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://earth.google.com/web/?authuser=0" id="google-earth-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="instagram" class="window" style="top: 20%; left: 90%;">
+        <div class="title-bar">
+            <span>Instagram</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('instagram')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('instagram')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://www.instagram.com" id="instagram-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="facebook" class="window" style="top: 20%; left: 90%;">
+        <div class="title-bar">
+            <span>Facebook</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('facebook')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('facebook')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://www.facebook.com" id="facebook-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="google-keep" class="window" style="top: 20%; left: 90%;">
+        <div class="title-bar">
+            <span>Google Keep</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('google-keep')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('google-keep')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://keep.google.com" id="google-keep-iframe"></iframe>
+        </div>
+    </div>
+
+    <div id="google-sheets" class="window" style="top: 20%; left: 90%;">
+        <div class="title-bar">
+            <span>Google Sheets</span>
+            <div class="controls">
+                <span class="close" onclick="closeWindow('google-sheets')">❌</span>
+                <span class="maximize" onclick="maximizeWindow('google-sheets')">⬜</span>
+            </div>
+        </div>
+        <div class="content">
+            <iframe src="https://docs.google.com/spreadsheets" id="google-sheets-iframe"></iframe>
+        </div>
+    </div>
+
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script>
+        document.getElementById('intro-video').addEventListener('ended', function() {
+            document.getElementById('video-overlay').style.display = 'none';
+            document.getElementById('sign-in').style.display = 'flex';
+        });
+
+        document.getElementById('start-button').onclick = function() {
+            document.getElementById('start-menu').style.display = 'flex';
+        };
+
+        function closeStartMenu() {
+            document.getElementById('start-menu').style.display = 'none';
+        }
+
+        function openWindow(id) {
+            const windows = document.querySelectorAll('.window');
+            windows.forEach(win => win.style.display = 'none');
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeWindow(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function maximizeWindow(id) {
+            const window = document.getElementById(id);
+            if (window.classList.contains('maximized')) {
+                window.classList.remove('maximized');
+                window.style.width = '800px';
+                window.style.height = '600px';
+                window.style.top = '20%';
+                window.style.left = '20%';
+            } else {
+                window.classList.add('maximized');
+                window.style.width = '100vw';
+                window.style.height = 'calc(100vh - 40px)';
+                window.style.top = '0';
+                window.style.left = '0';
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('time').textContent = `${hours}:${minutes}`;
+        }
+
+        setInterval(updateTime, 1000);
+
+        function signIn() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const message = document.getElementById('sign-in-message');
+
+            if (username === 'Public Account' && password === 'Qwerty123') {
+                message.textContent = 'Signed In Successfully';
+                message.style.color = 'green';
+                closeWindow('sign-in');
+                document.getElementById('taskbar').style.display = 'flex';
+            } else {
+                message.textContent = 'Invalid Credentials';
+                message.style.color = 'red';
+            }
+        }
+
+        function makeDraggable(element) {
+            let offsetX, offsetY, isDragging = false;
+
+            element.querySelector('.title-bar').addEventListener('mousedown', function(e) {
+                isDragging = true;
+                offsetX = e.clientX - element.getBoundingClientRect().left;
+                offsetY = e.clientY - element.getBoundingClientRect().top;
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    const left = e.clientX - offsetX;
+                    const top = e.clientY - offsetY;
+                    element.style.left = `${left}px`;
+                    element.style.top = `${top}px`;
+                }
+            });
+
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+        }
+
+        document.querySelectorAll('.window').forEach(makeDraggable);
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'S') { // S to open Snake Game
+                openWindow('snake');
+                event.preventDefault();
+            }
+            if (event.key === 'C') { // C to open Calculator
+                openWindow('calculator');
+                event.preventDefault();
+            }
+            if (event.key === 'B') { // B to open Browser
+                openWindow('browser');
+                event.preventDefault();
+            }
+            if (event.key === 'H') { // H to open Hyper AI
+                openWindow('hyper-ai');
+                event.preventDefault();
+            }
+            if (event.key === 'G') { // G to open Google Maps
+                openWindow('google-maps');
+                event.preventDefault();
+            }
+            if (event.key === 'Y') { // Y to open YouTube
+                openWindow('youtube');
+                event.preventDefault();
+            }
+            if (event.key === 'E') { // E to open Google Earth
+                openWindow('google-earth');
+                event.preventDefault();
+            }
+            if (event.key === 'I') { // I to open Instagram
+                openWindow('instagram');
+                event.preventDefault();
+            }
+            if (event.key === 'F') { // F to open Facebook
+                openWindow('facebook');
+                event.preventDefault();
+            }
+            if (event.key === 'K') { // K to open Google Keep
+                openWindow('google-keep');
+                event.preventDefault();
+            }
+            if (event.key === 'T') { // T to open Google Sheets
+                openWindow('google-sheets');
+                event.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
